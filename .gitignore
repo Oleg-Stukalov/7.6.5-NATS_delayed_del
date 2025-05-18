@@ -1,0 +1,15 @@
+.env
+
+.venv/
+venv/
+
+nui/
+nats/data/
+
+.idea/
+.vscode/
+
+**/__pycache__/
+
+*.mo
+*.pot
