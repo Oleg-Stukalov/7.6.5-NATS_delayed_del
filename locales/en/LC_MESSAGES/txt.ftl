@@ -1,7 +1,10 @@
-hello-user = Hello { $username }. Click on the button
+hello-user = Hello, <b>{ $username }</b>!
 
-button-button = Button
+             Send the command /del to see the pending message deletion.
 
-button-pressed = You pressed the button
+will-delete = This message will be deleted after { $delay ->
+                [one] { $delay } second.
+               *[other] { $delay } seconds.
+              }
 
-no-copy = This type of update is not supported by the send_copy method
+no-copy = This type of update is not supported by the send_copy method.

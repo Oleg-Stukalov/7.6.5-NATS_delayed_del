@@ -1,36 +1,38 @@
-from aiogram import F, Router, html
-from aiogram.filters import CommandStart
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
-)
+from aiogram import Router, html
+from aiogram.filters import Command, CommandStart
+from aiogram.types import Message
 from fluentogram import TranslatorRunner
+from services.delay_service.publisher import delay_message_deletion
+
+from nats.js.client import JetStreamContext
 
 # Инициализируем роутер уровня модуля
 user_router = Router()
 
 
-# Этот хэндлер срабатывает на команду /start
+# Этот хэндлер будет срабатывать на команду /start
 @user_router.message(CommandStart())
 async def process_start_command(message: Message, i18n: TranslatorRunner):
     username = html.quote(message.from_user.full_name)
-    # Создаем объект инлайн-кнопки
-    button = InlineKeyboardButton(
-        text=i18n.button.button(),
-        callback_data='button_pressed'
-    )
-    # Создаем объект инлайн-клавиатуры
-    markup = InlineKeyboardMarkup(inline_keyboard=[[button]])
-    # Отправляем сообщение пользователю
-    await message.answer(
-        text=i18n.hello.user(username=username),
-        reply_markup=markup
-    )
+    await message.answer(text=i18n.hello.user(username=username))
 
 
-# Этот хэндлер срабатывает на нажатие инлайн-кнопки
-@user_router.callback_query(F.data == 'button_pressed')
-async def process_button_click(callback: CallbackQuery, i18n: TranslatorRunner):
-    await callback.answer(text=i18n.button.pressed())
+# Этот хэндлер будет срабатывать на команду /del
+@user_router.message(Command('del'))
+async def send_and_del_message(
+    message: Message,
+    i18n: TranslatorRunner,
+    js: JetStreamContext,
+    delay_del_subject: str
+) -> None:
+
+    delay = 30
+    msg: Message = await message.answer(text=i18n.will.delete(delay=delay))
+
+    await delay_message_deletion(
+        js=js,
+        chat_id=msg.chat.id,
+        message_id=msg.message_id,
+        subject=delay_del_subject,
+        delay=delay
+    )
